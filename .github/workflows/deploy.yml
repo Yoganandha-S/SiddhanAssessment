@@ -1,0 +1,49 @@
+name: Deploy Application
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Verify Docker
+        run: |
+          docker --version
+
+      - name: Stop Existing Containers
+        run: |
+          docker stop server1 || true
+          docker stop server2 || true
+
+          docker rm server1 || true
+          docker rm server2 || true
+
+      - name: Build Docker Images
+        run: |
+          docker build -t server1 ./app/server1
+          docker build -t server2 ./app/server2
+
+      - name: Deploy Containers
+        run: |
+          docker run -d \
+          --name server1 \
+          -p 8080:80 \
+          --restart always \
+          server1
+
+          docker run -d \
+          --name server2 \
+          -p 8081:80 \
+          --restart always \
+          server2
+
+      - name: Verify Containers
+        run: |
+          docker ps
